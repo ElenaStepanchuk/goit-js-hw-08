@@ -4,39 +4,24 @@ import throttle from 'lodash.throttle';
 
 const iframe = document.querySelector('iframe');
 const iframePlayer = new Vimeo.Player(iframe);
+const STORAGE_KEY = 'videoplayer-current-time';
 
-throttle = require('lodash.throttle');
-const LOCALSTORAGE_KEY = 'videoplayer-current-time';
-const throttleTime = _.throttle(onGetTimePlayer, 1000);
-
-console.log(iframe);
-console.log(iframePlayer);
-
-player.on('play', function() {
-        console.log('played the video!');
-    });
-
-    player.getVideoTitle().then(function(title) {
-        console.log('title:', title);
-    });
+iframePlayer.on('timeupdate', throttle(throttleTime, 1000));
 
 
-function onGetTimePlayer() {
-    player
-        .getCurrentTime()
-        .then(function (seconds) {
-            // seconds = the current playback position
-            localStorage.setItem(LOCALSTORAGE_KEY, seconds);
-        }).catch(function (error) {
-            // an error occurred
-            console.log(error);
-        });
+function throttleTime(currentTime) {
+    const videoTime = JSON.stringify(currentTime);
+    localStorage.setItem(STORAGE_KEY, videoTime);
 }
 
-player.on('timeupdate', throttleTime);
+iframe.addEventListener('play', handleCurrentTime);
 
-const getCurrentTime = localStorage.getItem(LOCALSTORAGE_KEY);
+function handleCurrentTime() {
+  const savedCurrentTime = JSON.stringify(currentTime);
+  localStorage.setItem(STORAGE_KEY, savedCurrentTime);
+}
 
-player.setCurrentTime(getCurrentTime).catch(function(error) {
-    console.log(error);
-});
+let savedTime = localStorage.getItem(STORAGE_KEY);
+let parsedTime = JSON.parse(savedTime);
+
+iframePlayer.setCurrentTime(parsedTime?.['seconds'] || 0).then(function (seconds = 0) {});
